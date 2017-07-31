@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 def abiFiltersForWrapScript = []
-def SupportedABIs = ['armeabi-v7a', 'arm64-v8a']
+def SupportedABIs = ['arm64-v8a']
 
 android {
     compileSdkVersion 26
@@ -132,7 +132,7 @@ task copyASANLibs(type:Copy) {
 }
 task createWrapScriptAddDir(dependsOn: copyASANLibs) {
     for (String abi : SupportedABIs) {
-        def dir = new File("app/wrap_add_dir/res/lib" + abi)
+        def dir = new File("app/wrap_add_dir/res/lib/" + abi)
         dir.mkdirs()
         def wrapFile = new File(dir, "wrap.sh")
         writeWrapScriptToFullyCompileJavaApp(wrapFile, abi)
