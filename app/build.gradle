@@ -104,7 +104,7 @@ static def writeWrapScriptToFullyCompileJavaApp(wrapFile, abi) {
     if(abi == "arm64-v8a")
         abi = "aarch64"
     wrapFile.withWriter { writer ->
-        writer.write('#!/system/bin/sh-from-zygote\n')
+        writer.write('#!/system/bin/sh\n')
         writer.write('export ASAN_OPTIONS=start_deactivated=1,malloc_context_size=0\n')
         writer.write('export ASAN_ACTIVATION_OPTIONS=include_if_exists=/data/local/tmp/asan.options.b\n')
         writer.write("export LD_PRELOAD=libclang_rt.asan-${abi}-android.so\n")
@@ -132,7 +132,7 @@ task copyASANLibs(type:Copy) {
 }
 task createWrapScriptAddDir(dependsOn: copyASANLibs) {
     for (String abi : SupportedABIs) {
-        def dir = new File("app/wrap_add_dir/res/" + abi)
+        def dir = new File("app/wrap_add_dir/res/lib" + abi)
         dir.mkdirs()
         def wrapFile = new File(dir, "wrap.sh")
         writeWrapScriptToFullyCompileJavaApp(wrapFile, abi)
