@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 def abiFiltersForWrapScript = []
-def SupportedABIs = ['arm64-v8a']
+def SupportedABIs = ['armeabi-v7a']
 
 android {
     compileSdkVersion 26
@@ -105,12 +105,13 @@ static def writeWrapScriptToFullyCompileJavaApp(wrapFile, abi) {
         abi = "aarch64"
     wrapFile.withWriter { writer ->
         writer.write('#!/system/bin/sh\n')
+        writer.write('HERE="$(cd "$(dirname "$0")" && pwd)"\n')
         writer.write('export ASAN_OPTIONS=start_deactivated=1,malloc_context_size=0\n')
         writer.write('export ASAN_ACTIVATION_OPTIONS=include_if_exists=/data/local/tmp/asan.options.b\n')
-        writer.write("export LD_PRELOAD=libclang_rt.asan-${abi}-android.so\n")
-        writer.write('su -c setenforcing 0\n')
+        writer.write("export LD_PRELOAD=\$HERE/libclang_rt.asan-${abi}-android.so\n")
+        writer.write('su -c setenforce 0\n')
         writer.write('\$@\n')
-        writer.write('su -c setenforcing 1\n')
+        writer.write('su -c setenforce 1\n')
     }
 }
 
