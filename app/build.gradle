@@ -98,6 +98,32 @@ task deleteASAN(type: Delete) {
 
 clean.dependsOn(deleteASAN)
 
+task setEnforceOff() {
+    doLast {
+        def sdkDir = file("$rootProject.ext.ndkDir").getParentFile().absolutePath
+        def process = ("$sdkDir/platform-tools/adb shell su -c \"setenforce 0\"").execute()
+        process.waitFor()
+        if (process.exitValue()) {
+            println("stdout: " + process.in.text)
+            println("stderr: " + process.err.text)
+            throw new GradleException("error in set enforce command")
+        }
+    }
+}
+
+task setEnforceOn() {
+    doLast {
+        def sdkDir = file("$rootProject.ext.ndkDir").getParentFile().absolutePath
+        def process = ("$sdkDir/platform-tools/adb shell su -c \"setenforce 1\"").execute()
+        process.waitFor()
+        if (process.exitValue() != 0) {
+            println("stdout: " + process.in.text)
+            println("stderr: " + process.err.text)
+            throw new GradleException("error in set enforce command")
+        }
+    }
+}
+
 static def writeWrapScriptToFullyCompileJavaApp(wrapFile, abi) {
     if(abi == "armeabi" || abi == "armeabi-v7a")
         abi = "arm"
@@ -105,13 +131,11 @@ static def writeWrapScriptToFullyCompileJavaApp(wrapFile, abi) {
         abi = "aarch64"
     wrapFile.withWriter { writer ->
         writer.write('#!/system/bin/sh\n')
-        writer.write('su -c setenforce 0\n')
         writer.write('HERE="$(cd "$(dirname "$0")" && pwd)"\n')
-        writer.write('export ASAN_OPTIONS=start_deactivated=1,malloc_context_size=0\n')
+        writer.write('export ASAN_OPTIONS=log_to_syslog=false,allow_user_segv_handler=1\n')
         writer.write('export ASAN_ACTIVATION_OPTIONS=include_if_exists=/data/local/tmp/asan.options.b\n')
         writer.write("export LD_PRELOAD=\$HERE/libclang_rt.asan-${abi}-android.so\n")
         writer.write('\$@\n')
-        writer.write('su -c setenforce 1\n')
     }
 }
 
@@ -133,7 +157,7 @@ task copyASANLibs(type:Copy) {
 }
 task createWrapScriptAddDir(dependsOn: copyASANLibs) {
     for (String abi : SupportedABIs) {
-        def dir = new File("app/wrap_add_dir/res/lib/" + abi)
+        def dir = new File("app/wrap_add_dir/res/" + abi)
         dir.mkdirs()
         def wrapFile = new File(dir, "wrap.sh")
         writeWrapScriptToFullyCompileJavaApp(wrapFile, abi)
