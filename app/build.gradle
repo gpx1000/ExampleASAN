@@ -4,12 +4,12 @@ def abiFiltersForWrapScript = []
 def SupportedABIs = ['armeabi-v7a']
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
     defaultConfig {
         applicationId "com.gpxblog.exampleasan"
         minSdkVersion 24
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -76,13 +76,13 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    testCompile 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:27.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
 }
 
 tasks.whenTaskAdded { task ->
@@ -97,32 +97,6 @@ task deleteASAN(type: Delete) {
 }
 
 clean.dependsOn(deleteASAN)
-
-task setEnforceOff() {
-    doLast {
-        def sdkDir = file("$rootProject.ext.ndkDir").getParentFile().absolutePath
-        def process = ("$sdkDir/platform-tools/adb shell su -c \"setenforce 0\"").execute()
-        process.waitFor()
-        if (process.exitValue()) {
-            println("stdout: " + process.in.text)
-            println("stderr: " + process.err.text)
-            throw new GradleException("error in set enforce command")
-        }
-    }
-}
-
-task setEnforceOn() {
-    doLast {
-        def sdkDir = file("$rootProject.ext.ndkDir").getParentFile().absolutePath
-        def process = ("$sdkDir/platform-tools/adb shell su -c \"setenforce 1\"").execute()
-        process.waitFor()
-        if (process.exitValue() != 0) {
-            println("stdout: " + process.in.text)
-            println("stderr: " + process.err.text)
-            throw new GradleException("error in set enforce command")
-        }
-    }
-}
 
 static def writeWrapScriptToFullyCompileJavaApp(wrapFile, abi) {
     if(abi == "armeabi" || abi == "armeabi-v7a")
